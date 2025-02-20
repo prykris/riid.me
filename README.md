@@ -82,14 +82,14 @@ redis-cli ping
 
 ```bash
 # Create directory for the app
-sudo mkdir -p /var/www/riid.me
-cd /var/www/riid.me
+sudo mkdir -p /srv/www/riid.me
+cd /srv/www/riid.me
 
 # Clone the repository
 sudo git clone https://github.com/yourusername/riid.me.git .
 
 # Set proper permissions
-sudo chown -R www-data:www-data /var/www/riid.me
+sudo chown -R www-data:www-data /srv/www/riid.me
 
 # Copy and configure environment file
 sudo cp .env.example .env
@@ -116,8 +116,8 @@ After=network.target redis-server.service
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/var/www/riid.me
-ExecStart=/var/www/riid.me/riid-server
+WorkingDirectory=/srv/www/riid.me
+ExecStart=/srv/www/riid.me/riid-server
 Restart=always
 Environment=APP_ENV=production
 
