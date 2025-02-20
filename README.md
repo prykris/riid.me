@@ -101,14 +101,18 @@ sudo nano .env  # Configure your production settings
 ```bash
 # Install dependencies and build
 go mod download
-go build -o riid-server
+go build -buildvcs=false -o riid-server
+```
 
-# Create a systemd service
+### 5. Create Systemd Service
+
+```bash
+# Create the service file
 sudo nano /etc/systemd/system/riid.service
 ```
 
-Add the following content:
-```ini
+Create a new service file with this content:
+```systemd
 [Unit]
 Description=riid.me URL Shortener
 After=network.target redis-server.service
@@ -125,13 +129,14 @@ Environment=APP_ENV=production
 WantedBy=multi-user.target
 ```
 
-Start the service:
+Enable and start the service:
 ```bash
+sudo systemctl daemon-reload
 sudo systemctl start riid
 sudo systemctl enable riid
 ```
 
-### 5. Configure Apache2 as Reverse Proxy
+### 6. Configure Apache2 as Reverse Proxy
 
 ```bash
 # Enable required Apache modules
@@ -170,7 +175,7 @@ sudo a2ensite riid.me.conf
 sudo systemctl restart apache2
 ```
 
-### 6. Set Up SSL (Optional but Recommended)
+### 7. Set Up SSL (Optional but Recommended)
 
 ```bash
 # Install Certbot
@@ -180,7 +185,7 @@ sudo apt install certbot python3-certbot-apache -y
 sudo certbot --apache -d riid.me -d www.riid.me
 ```
 
-### 7. Maintenance and Monitoring
+### 8. Maintenance and Monitoring
 
 - View application logs:
   ```bash
