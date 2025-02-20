@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="riid.me - Free URL shortener service. Create short, memorable links instantly.">
+    <meta name="keywords" content="url shortener, link shortener, short url, riid.me">
+    <meta name="robots" content="index, follow">
+    <title>riid.me - URL Shortener</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --success-dark: #059669;
+            --bg: #ffffff;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .container {
+            width: min(640px, 100%);
+            padding: 2rem 1rem;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.025em;
+        }
+
+        .tagline {
+            color: var(--text-light);
+            margin-top: 0.5rem;
+            font-size: clamp(0.875rem, 2vw, 1.125rem);
+        }
+
+        .url-form {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        input {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            background: var(--bg);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        input::placeholder {
+            color: var(--text-light);
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.875rem 1.5rem;
+            border-radius: var(--radius);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            opacity: 0;
+            transform: translateY(10px);
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .result.visible {
+            opacity: 1;
+            transform: translateY(0);
+            height: auto;
+            margin-top: 1.5rem;
+        }
+
+        .result-label {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .short-url {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+        }
+
+        .url-text {
+            color: var(--primary);
+            font-weight: 500;
+            word-break: break-all;
+            padding: 0.25rem 0;
+        }
+
+        .url-link {
+            color: inherit;
+            text-decoration: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .url-link:hover {
+            opacity: 0.8;
+        }
+
+        .copy-btn {
+            background: var(--success);
+            padding: 0.75rem 1.25rem;
+            white-space: nowrap;
+            height: fit-content;
+        }
+
+        .copy-btn:hover {
+            background: var(--success-dark);
+        }
+
+        .copy-btn.copied {
+            background: var(--success-dark);
+        }
+
+        .error {
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .error.visible {
+            opacity: 1;
+            height: auto;
+            margin-top: 1rem;
+            padding: 0.75rem 1rem;
+            color: #dc2626;
+            font-size: 0.875rem;
+            border: 2px solid #fecaca;
+            border-radius: var(--radius);
+            background: #fef2f2;
+        }
+
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1.25rem;
+            height: 1.25rem;
+            border: 2px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+            z-index: 10;
+            background: var(--bg);
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        @keyframes spin {
+            to {
+                transform: translateY(-50%) rotate(360deg);
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+                justify-content: flex-start;
+                padding-top: 3rem;
+            }
+
+            .container {
+                padding: 0;
+            }
+
+            .logo {
+                margin-bottom: 2rem;
+            }
+
+            .url-form {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+                padding: 1rem;
+            }
+
+            .short-url {
+                grid-template-columns: 1fr;
+                padding: 0.75rem;
+            }
+
+            .copy-btn {
+                width: 100%;
+            }
+
+            input {
+                padding: 1rem;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111827;
+                --text: #f3f4f6;
+                --text-light: #9ca3af;
+                --border: #374151;
+            }
+
+            .error.visible {
+                background: #7f1d1d;
+                border-color: #b91c1c;
+            }
+
+            input {
+                color: var(--text);
+            }
+        }
+
+        .history {
+            margin-top: 3rem;
+            opacity: 0;
+            height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .history.visible {
+            opacity: 1;
+            height: auto;
+        }
+
+        .history h2 {
+            font-size: 1.25rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .history-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg);
+            align-items: center;
+        }
+
+        .history-item .urls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            overflow: hidden;
+        }
+
+        .history-item .long-url {
+            color: var(--text-light);
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item .short-url {
+            color: var(--primary);
+            font-weight: 500;
+            padding: 0;
+            border: none;
+            background: none;
+        }
+
+        .clear-history {
+            background: none;
+            border: 2px solid var(--border);
+            color: var(--text);
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .clear-history:hover {
+            background: var(--border);
+            transform: none;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .history-item {
+                background: var(--bg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>riid.me</h1>
+            <p class="tagline">Shorten your links, expand your reach</p>
+        </div>
+        <form class="url-form" id="urlForm">
+            <input type="text" id="longUrl" placeholder="Enter URL (e.g. example.com)" required autocomplete="off"
+                spellcheck="false" pattern="^(?:(?:https?:)?\/\/)?[^\s/$.?#][^\s]*$"
+                title="Enter a valid URL (with or without http://)">
+            <div class="loading" id="loading"></div>
+            <button type="submit">Shorten URL</button>
+        </form>
+        <div class="result" id="result">
+            <div class="result-label">Your shortened URL is ready!</div>
+            <div class="short-url">
+                <span class="url-text" id="shortUrl"></span>
+                <button class="copy-btn" id="copyBtn">Copy URL</button>
+            </div>
+        </div>
+        <div class="error" id="error"></div>
+
+        <div class="history" id="history">
+            <h2>Recent URLs</h2>
+            <div class="history-list" id="historyList"></div>
+            <button class="clear-history" id="clearHistory">Clear History</button>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const result = document.getElementById('result');
+        const shortUrlEl = document.getElementById('shortUrl');
+        const copyBtn = document.getElementById('copyBtn');
+        const errorEl = document.getElementById('error');
+        const loading = document.getElementById('loading');
+        const input = document.getElementById('longUrl');
+
+        const historyEl = document.getElementById('history');
+        const historyList = document.getElementById('historyList');
+        const clearHistoryBtn = document.getElementById('clearHistory');
+        const MAX_HISTORY_ITEMS = 5;
+
+        function isValidURL(url) {
+            const pattern = /^(?:(?:https?:)?\/\/)?[^\s/$.?#][^\s]*$/i;
+            return pattern.test(url.trim());
+        }
+
+        function normalizeURL(url) {
+            if (!/^https?:\/\//i.test(url)) {
+                return 'https://' + url;
+            }
+            return url;
+        }
+
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+            if (history.length > 0) {
+                historyEl.classList.add('visible');
+                renderHistory(history);
+            } else {
+                historyEl.classList.remove('visible');
+            }
+        }
+
+        function renderHistory(history) {
+            historyList.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="urls">
+                        <div class="long-url" title="${item.longUrl}">
+                            <a href="${normalizeURL(item.longUrl)}" class="url-link" target="_blank" rel="noopener noreferrer">${item.longUrl}</a>
+                        </div>
+                        <div class="short-url">
+                            <a href="${item.shortUrl}" class="url-link" target="_blank" rel="noopener noreferrer">${item.shortUrl}</a>
+                        </div>
+                    </div>
+                    <button class="copy-btn" onclick="copyHistoryUrl('${item.shortUrl}', this)">Copy</button>
+                </div>
+            `).join('');
+        }
+
+        function addToHistory(longUrl, shortUrl) {
+            const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
+            
+            // Remove duplicate if exists
+            const filtered = history.filter(item => item.longUrl !== longUrl);
+            
+            // Add new item to start
+            filtered.unshift({ longUrl, shortUrl });
+            
+            // Keep only last MAX_HISTORY_ITEMS
+            const newHistory = filtered.slice(0, MAX_HISTORY_ITEMS);
+            
+            localStorage.setItem('urlHistory', JSON.stringify(newHistory));
+            loadHistory();
+        }
+
+        async function copyHistoryUrl(url, button) {
+            try {
+                await navigator.clipboard.writeText(url);
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.classList.add('copied');
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                errorEl.textContent = 'Failed to copy to clipboard';
+                errorEl.classList.add('visible');
+            }
+        }
+
+        clearHistoryBtn.addEventListener('click', () => {
+            localStorage.removeItem('urlHistory');
+            historyEl.classList.remove('visible');
+            historyList.innerHTML = '';
+        });
+
+        // Load history on page load
+        loadHistory();
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = input.value.trim();
+
+            if (!isValidURL(url)) {
+                errorEl.textContent = 'Error: Please enter a valid URL';
+                errorEl.classList.add('visible');
+                return;
+            }
+
+            try {
+                errorEl.classList.remove('visible');
+                loading.classList.add('visible');
+
+                const response = await fetch('/shorten', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ long_url: url })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to shorten URL');
+                }
+
+                const data = await response.json();
+                const shortUrl = data.short_url;
+                shortUrlEl.innerHTML = `<a href="${shortUrl}" class="url-link" target="_blank" rel="noopener noreferrer">${shortUrl}</a>`;
+                result.classList.add('visible');
+                
+                addToHistory(url, shortUrl);
+                input.value = '';
+
+            } catch (err) {
+                errorEl.textContent = 'Error: ' + err.message;
+                errorEl.classList.add('visible');
+                result.classList.remove('visible');
+            } finally {
+                loading.classList.remove('visible');
+            }
+        });
+
+        copyBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(shortUrlEl.textContent);
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy URL';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (err) {
+                errorEl.textContent = 'Failed to copy to clipboard';
+                errorEl.classList.add('visible');
+            }
+        });
+
+        // Auto-focus input on page load
+        window.addEventListener('load', () => {
+            input.focus();
+        });
+    </script>
+</body>
+
+</html>
