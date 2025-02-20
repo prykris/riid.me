@@ -443,16 +443,16 @@
 
         function addToHistory(longUrl, shortUrl) {
             const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
-            
+
             // Remove duplicate if exists
             const filtered = history.filter(item => item.longUrl !== longUrl);
-            
+
             // Add new item to start
             filtered.unshift({ longUrl, shortUrl });
-            
+
             // Keep only last MAX_HISTORY_ITEMS
             const newHistory = filtered.slice(0, MAX_HISTORY_ITEMS);
-            
+
             localStorage.setItem('urlHistory', JSON.stringify(newHistory));
             loadHistory();
         }
@@ -512,7 +512,7 @@
                 const shortUrl = data.short_url;
                 shortUrlEl.innerHTML = `<a href="${shortUrl}" class="url-link" target="_blank" rel="noopener noreferrer">${shortUrl}</a>`;
                 result.classList.add('visible');
-                
+
                 addToHistory(url, shortUrl);
                 input.value = '';
 

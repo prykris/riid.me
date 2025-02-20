@@ -2,6 +2,24 @@
 
 A minimalist, fast URL shortener service built with Go and vanilla JavaScript. Features include URL shortening, history tracking, and a clean, responsive UI that works great on all devices.
 
+## Official SDKs
+
+- [PHP SDK](https://github.com/prykris/riid.me-php) - Standalone PHP package for API integration
+- [Laravel Package](https://github.com/prykris/riid.me-laravel) - Native Laravel integration with framework features
+
+```php
+// PHP SDK Usage
+use Riidme\Client;
+
+$client = new Client(['base_url' => 'https://riid.me']);
+$shortUrl = $client->shorten('https://example.com');
+
+// Laravel Package Usage
+use Riidme\Laravel\Facades\Riidme;
+
+$shortUrl = Riidme::shorten('https://example.com');
+```
+
 ## Features
 
 - 🚀 Fast URL shortening
@@ -223,4 +241,42 @@ Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
-limitations under the License. 
+limitations under the License.
+
+## API Integration
+
+### Official SDKs
+
+For seamless integration with your applications, we provide official SDK packages:
+
+- **[PHP SDK](https://github.com/prykris/riid.me-php)**
+  - Standalone PHP 8.1+ package
+  - PSR-7 and PSR-18 compliant
+  - Async support
+  - Comprehensive error handling
+  - Install: `composer require prykris/riidme-php`
+
+- **[Laravel Package](https://github.com/prykris/riid.me-laravel)**
+  - Native Laravel 10.x integration
+  - Facade and Service Provider
+  - Queue and Cache support
+  - Blade directives
+  - Install: `composer require prykris/riidme-laravel`
+
+### Direct API Usage
+
+If you prefer to integrate directly with our API:
+
+```bash
+# Create shortened URL
+curl -X POST https://riid.me/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"long_url": "https://example.com"}'
+
+# Response
+{
+  "short_url": "https://riid.me/abc123"
+}
+```
+
+For more details about our API and integration options, visit the SDK repositories linked above. 
