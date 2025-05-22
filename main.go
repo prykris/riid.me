@@ -65,17 +65,35 @@ func main() {
 		customlogger.Fatal().Err(err).Msg("Failed to initialize ShortID service during startup")
 	}
 
-	// 5. Setup Router
+	// 5. Setup Router with request logging
 	router := mux.NewRouter()
 
-	// API routes using handlers from the handlers package
+	// Log all incoming requests
+	router.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			customlogger.Info().
+				Str("method", r.Method).
+				Str("path", r.URL.Path).
+				Str("host", r.Host).
+				Str("remote", r.RemoteAddr).
+				Msg("Incoming request")
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	// API routes - order is important (specific routes before catch-all)
 	router.HandleFunc("/shorten", handlers.CreateShortURL).Methods("POST")
 	router.HandleFunc("/api/stats/{shortcode}", handlers.GetLinkStatsHandler).Methods("GET")
 	router.HandleFunc("/api/qr/{shortcode}", handlers.GenerateQRCodeHandler).Methods("GET")
 	router.HandleFunc("/health", healthCheck).Methods("GET")
+	router.HandleFunc("/validate-auth", handlers.ValidateAuthCodeHandler).Methods("POST").Name("validate-auth") // Named route for debugging
 
-	// IMPORTANT: Place /validate-auth before the catch-all route
-	router.HandleFunc("/validate-auth", handlers.ValidateAuthCodeHandler).Methods("POST")
+	// Add a test route for debugging routing
+	router.HandleFunc("/test-route", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Test route is working!"))
+	}).Methods("GET").Name("test-route")
 
 	// Serve static files (e.g., index.html)
 	// The path "./static/" is relative to where the binary is run.
