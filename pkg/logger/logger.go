@@ -32,10 +32,14 @@ func Info() *zerolog.Event {
 	return log.Info()
 }
 
+func Warn() *zerolog.Event {
+	return log.Warn()
+}
+
 func Debug() *zerolog.Event {
 	return log.Debug()
 }
 
 func Fatal() *zerolog.Event {
 	return log.Fatal()
-} 
+}

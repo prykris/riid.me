@@ -1,550 +1,822 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="riid.me - Free URL shortener service. Create short, memorable links instantly.">
-    <meta name="keywords" content="url shortener, link shortener, short url, riid.me">
-    <meta name="robots" content="index, follow">
-    <title>riid.me - URL Shortener</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <title>riid.me - Modern URL Shortener</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #4f46e5;
-            --primary-dark: #4338ca;
-            --success: #10b981;
-            --success-dark: #059669;
-            --bg: #ffffff;
-            --text: #1f2937;
-            --text-light: #6b7280;
-            --border: #e5e7eb;
-            --radius: 12px;
+            --background-light: #f7f9fc;
+            --text-light: #2c3e50;
+            --primary-light: #3498db;
+            --primary-hover-light: #2980b9;
+            --secondary-light: #ecf0f1;
+            --border-light: #dfe6e9;
+            --input-bg-light: #ffffff;
+            --input-border-light: #ced4da;
+            --button-text-light: #ffffff;
+            --history-item-bg-light: #ffffff;
+            --history-item-border-light: #e0e6ed;
+            --toast-success-bg-light: #2ecc71;
+            --toast-error-bg-light: #e74c3c;
+            --toast-text-light: #ffffff;
+            --premium-accent-light: #27ae60; /* A nice green for premium */
+            --premium-badge-bg-light: var(--premium-accent-light);
+            --premium-badge-text-light: #ffffff;
+
+            --background-dark: #2c3e50; /* Darker, more bluish */
+            --text-dark: #ecf0f1;
+            --primary-dark: #5dade2; /* Lighter blue for dark mode */
+            --primary-hover-dark: #4a90e2;
+            --secondary-dark: #34495e; /* Darker secondary */
+            --border-dark: #4a627a;
+            --input-bg-dark: #3b5266;
+            --input-border-dark: #5e7a93;
+            --button-text-dark: #ffffff;
+            --history-item-bg-dark: #34495e;
+            --history-item-border-dark: #4a627a;
+            --toast-success-bg-dark: #27ae60;
+            --toast-error-bg-dark: #c0392b;
+            --toast-text-dark: #ffffff;
+            --premium-accent-dark: #2ecc71; /* Brighter green for dark mode */
+            --premium-badge-bg-dark: var(--premium-accent-dark);
+            --premium-badge-text-dark: #1e2b37; /* Darker text for light badge */
+
+            /* Default to light theme */
+            --background: var(--background-light);
+            --text: var(--text-light);
+            --primary: var(--primary-light);
+            --primary-hover: var(--primary-hover-light);
+            --secondary: var(--secondary-light);
+            --border: var(--border-light);
+            --input-bg: var(--input-bg-light);
+            --input-border: var(--input-border-light);
+            --button-text: var(--button-text-light);
+            --history-item-bg: var(--history-item-bg-light);
+            --history-item-border: var(--history-item-border-light);
+            --toast-success-bg: var(--toast-success-bg-light);
+            --toast-error-bg: var(--toast-error-bg-light);
+            --toast-text: var(--toast-text-light);
+            --premium-accent: var(--premium-accent-light);
+            --premium-badge-bg: var(--premium-badge-bg-light);
+            --premium-badge-text: var(--premium-badge-text-light);
+
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+            --border-radius: 8px;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 10px rgba(0,0,0,0.08);
+            --transition-speed: 0.3s;
         }
 
-        * {
+        .dark-mode {
+            --background: var(--background-dark);
+            --text: var(--text-dark);
+            --primary: var(--primary-dark);
+            --primary-hover: var(--primary-hover-dark);
+            --secondary: var(--secondary-dark);
+            --border: var(--border-dark);
+            --input-bg: var(--input-bg-dark);
+            --input-border: var(--input-border-dark);
+            --button-text: var(--button-text-dark);
+            --history-item-bg: var(--history-item-bg-dark);
+            --history-item-border: var(--history-item-border-dark);
+            --toast-success-bg: var(--toast-success-bg-dark);
+            --toast-error-bg: var(--toast-error-bg-dark);
+            --toast-text: var(--toast-text-dark);
+            --premium-accent: var(--premium-accent-dark);
+            --premium-badge-bg: var(--premium-badge-bg-dark);
+            --premium-badge-text: var(--premium-badge-text-dark);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            line-height: 1.6;
+            font-family: var(--font-sans);
+            background-color: var(--background);
             color: var(--text);
-            background: var(--bg);
-            min-height: 100vh;
+            line-height: 1.6;
             display: flex;
             flex-direction: column;
+            min-height: 100vh;
+            transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
+            padding: 20px;
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            padding: 1rem;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border);
         }
 
-        .container {
-            width: min(640px, 100%);
-            padding: 2rem 1rem;
+        .logo-container {
+            display: flex;
+            align-items: center;
         }
 
-        .logo {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        h1 {
-            font-size: clamp(2rem, 5vw, 2.5rem);
+        header h1 {
+            font-size: 2rem;
             font-weight: 700;
             color: var(--primary);
-            letter-spacing: -0.025em;
+            margin: 0;
         }
 
-        .tagline {
-            color: var(--text-light);
-            margin-top: 0.5rem;
-            font-size: clamp(0.875rem, 2vw, 1.125rem);
+        #premiumBadge {
+            font-size: 0.8rem;
+            font-weight: 600;
+            background-color: var(--premium-badge-bg);
+            color: var(--premium-badge-text);
+            padding: 4px 10px;
+            border-radius: var(--border-radius);
+            margin-left: 12px;
+            opacity: 0;
+            transform: translateY(-5px) scale(0.95);
+            transition: opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
         }
 
-        .url-form {
+        .page-wrapper.premium-active #premiumBadge {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .controls {
             display: flex;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        input {
-            flex: 1;
-            padding: 1rem 1.25rem;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            font-size: 1rem;
-            transition: all 0.2s ease;
-            font-family: inherit;
-            background: var(--bg);
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-
-        input::placeholder {
-            color: var(--text-light);
-        }
-
-        button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.875rem 1.5rem;
-            border-radius: var(--radius);
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: inherit;
-        }
-
-        button:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .result {
-            opacity: 0;
-            transform: translateY(10px);
-            height: 0;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .result.visible {
-            opacity: 1;
-            transform: translateY(0);
-            height: auto;
-            margin-top: 1.5rem;
-        }
-
-        .result-label {
-            color: var(--text-light);
-            font-size: 0.875rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .short-url {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 0.75rem;
             align-items: center;
-            padding: 0.75rem;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg);
         }
 
-        .url-text {
-            color: var(--primary);
-            font-weight: 500;
-            word-break: break-all;
-            padding: 0.25rem 0;
-        }
-
-        .url-link {
-            color: inherit;
-            text-decoration: none;
-            transition: opacity 0.2s ease;
-        }
-
-        .url-link:hover {
-            opacity: 0.8;
-        }
-
-        .copy-btn {
-            background: var(--success);
-            padding: 0.75rem 1.25rem;
-            white-space: nowrap;
-            height: fit-content;
-        }
-
-        .copy-btn:hover {
-            background: var(--success-dark);
-        }
-
-        .copy-btn.copied {
-            background: var(--success-dark);
-        }
-
-        .error {
-            opacity: 0;
-            height: 0;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .error.visible {
-            opacity: 1;
-            height: auto;
-            margin-top: 1rem;
-            padding: 0.75rem 1rem;
-            color: #dc2626;
-            font-size: 0.875rem;
-            border: 2px solid #fecaca;
-            border-radius: var(--radius);
-            background: #fef2f2;
-        }
-
-        .loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 1.25rem;
-            height: 1.25rem;
-            border: 2px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
-            z-index: 10;
-            background: var(--bg);
-        }
-
-        .loading.visible {
-            display: block;
-        }
-
-        @keyframes spin {
-            to {
-                transform: translateY(-50%) rotate(360deg);
-            }
-        }
-
-        @media (max-width: 640px) {
-            body {
-                padding: 1rem;
-                justify-content: flex-start;
-                padding-top: 3rem;
-            }
-
-            .container {
-                padding: 0;
-            }
-
-            .logo {
-                margin-bottom: 2rem;
-            }
-
-            .url-form {
-                flex-direction: column;
-            }
-
-            button {
-                width: 100%;
-                padding: 1rem;
-            }
-
-            .short-url {
-                grid-template-columns: 1fr;
-                padding: 0.75rem;
-            }
-
-            .copy-btn {
-                width: 100%;
-            }
-
-            input {
-                padding: 1rem;
-            }
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #111827;
-                --text: #f3f4f6;
-                --text-light: #9ca3af;
-                --border: #374151;
-            }
-
-            .error.visible {
-                background: #7f1d1d;
-                border-color: #b91c1c;
-            }
-
-            input {
-                color: var(--text);
-            }
-        }
-
-        .history {
-            margin-top: 3rem;
-            opacity: 0;
-            height: 0;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .history.visible {
-            opacity: 1;
-            height: auto;
-        }
-
-        .history h2 {
-            font-size: 1.25rem;
+        #darkModeToggle {
+            background: none;
+            border: 1px solid var(--border);
             color: var(--text);
-            margin-bottom: 1rem;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+            margin-right: 10px;
+        }
+
+        #darkModeToggle:hover {
+            background-color: var(--secondary);
+        }
+
+        #clearHistoryBtn {
+            background-color: var(--primary);
+            color: var(--button-text);
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        #clearHistoryBtn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            flex-grow: 1;
+        }
+
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row;
+                align-items: flex-start; /* Ensure columns can have independent heights */
+            }
+        }
+
+        .form-section-wrapper {
+            flex: 1 1 55%; /* Allow form to take a bit more space if needed */
+            min-width: 300px;
+        }
+
+        .form-section {
+            background-color: var(--secondary);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-md);
+            border-left: 5px solid transparent; /* Placeholder for premium accent */
+            transition: border-left-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
+        }
+
+        .page-wrapper.premium-active .form-section {
+            border-left-color: var(--premium-accent);
+        }
+
+        .form-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
             font-weight: 600;
         }
 
-        .history-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+        .input-group {
+            margin-bottom: 20px;
         }
 
-        .history-item {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            border: 2px solid var(--border);
-            border-radius: var(--radius);
-            background: var(--bg);
-            align-items: center;
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
 
-        .history-item .urls {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
+        .input-group input[type="url"],
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-bg);
+            color: var(--text);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+        }
+
+        .input-group input[type="url"]:focus,
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 52, 152, 219), 0.25); /* Use RGB for primary for box-shadow */
+        }
+
+        /* Helper to set --primary-rgb based on current theme */
+        body:not(.dark-mode) { --primary-rgb: 52, 152, 219; }
+        body.dark-mode { --primary-rgb: 93, 173, 226; }
+
+
+        button#shortenBtn, button#unlockPremiumBtn {
+            width: 100%;
+            padding: 12px 20px;
+            background-color: var(--primary);
+            color: var(--button-text);
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color var(--transition-speed) ease, transform 0.1s ease;
+            text-align: center;
+        }
+
+        button#shortenBtn:hover, button#unlockPremiumBtn:hover {
+            background-color: var(--primary-hover);
+        }
+        button#shortenBtn:active, button#unlockPremiumBtn:active {
+            transform: scale(0.98);
+        }
+
+        #premiumUnlockSection {
+            margin-bottom: 20px;
+            transition: opacity var(--transition-speed) ease, max-height var(--transition-speed) ease, margin var(--transition-speed) ease, padding var(--transition-speed) ease;
             overflow: hidden;
+            max-height: 100px; /* Enough for the button */
         }
 
-        .history-item .long-url {
-            color: var(--text-light);
-            font-size: 0.875rem;
+        .page-wrapper.premium-active #premiumUnlockSection {
+            opacity: 0;
+            max-height: 0;
+            margin-bottom: 0;
+            padding-top: 0; /* To avoid padding jump during transition */
+            padding-bottom: 0;
+            pointer-events: none;
+        }
+
+        #customOptionsPanel {
+            border-top: 1px solid var(--border);
+            margin-top: 20px;
+            padding-top: 20px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            visibility: hidden;
+            transition: opacity var(--transition-speed) ease, max-height var(--transition-speed) ease, margin-top var(--transition-speed) ease, padding-top var(--transition-speed) ease, visibility 0s var(--transition-speed);
+        }
+
+        .page-wrapper.premium-active #customOptionsPanel {
+            opacity: 1;
+            max-height: 500px; /* Adjust as needed for content */
+            visibility: visible;
+            transition: opacity var(--transition-speed) ease, max-height var(--transition-speed) ease, margin-top var(--transition-speed) ease, padding-top var(--transition-speed) ease, visibility 0s 0s;
+        }
+
+        .info-section {
+            flex: 1 1 40%;
+            min-width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .info-section {
+                position: sticky;
+                top: 20px; /* Adjust based on your header or other fixed elements */
+                align-self: flex-start; /* Important for sticky to work correctly within flex */
+                max-height: calc(100vh - 40px); /* Prevent it from being taller than viewport */
+                overflow-y: auto; /* Allow scrolling within if content overflows */
+            }
+        }
+
+        .result-section, .history-section {
+            background-color: var(--secondary);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        .result-section.hidden {
+            display: none;
+        }
+
+        .result-section h2, .history-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        #result {
+            word-break: break-all;
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            background-color: var(--input-bg);
+            padding: 10px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border);
+            margin-bottom: 10px;
+            min-height: 40px; /* So it doesn't collapse when empty */
+            display: flex;
+            align-items: center;
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+
+        #copyBtn {
+            background-color: var(--primary);
+            color: var(--button-text);
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: background-color var(--transition-speed) ease, opacity var(--transition-speed) ease, transform var(--transition-speed) ease;
+        }
+
+        #copyBtn.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #copyBtn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        #historyList {
+            list-style: none;
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 10px; /* For scrollbar */
+        }
+
+        #historyList li {
+            background-color: var(--history-item-bg);
+            border: 1px solid var(--history-item-border);
+            padding: 12px 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+        }
+
+        #historyList li .original-url {
+            flex-grow: 1;
+            margin-right: 10px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            color: var(--text);
         }
 
-        .history-item .short-url {
+        #historyList li .short-url {
+            font-family: var(--font-mono);
             color: var(--primary);
             font-weight: 500;
-            padding: 0;
-            border: none;
-            background: none;
         }
 
-        .clear-history {
-            background: none;
-            border: 2px solid var(--border);
+        #historyList li:last-child {
+            margin-bottom: 0;
+        }
+
+        .loader {
+            border: 4px solid var(--secondary);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            color: var(--toast-text);
+            font-size: 0.95rem;
+            font-weight: 500;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background-color: var(--toast-success-bg);
+        }
+
+        .toast.error {
+            background-color: var(--toast-error-bg);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: auto; /* Pushes footer to bottom */
+            font-size: 0.9rem;
             color: var(--text);
-            margin-top: 1rem;
-            width: 100%;
+            border-top: 1px solid var(--border);
         }
 
-        .clear-history:hover {
-            background: var(--border);
-            transform: none;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .history-item {
-                background: var(--bg);
-            }
+        /* Utility classes */
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
-
 <body>
-    <div class="container">
-        <div class="logo">
-            <h1>riid.me</h1>
-            <p class="tagline">Shorten your links, expand your reach</p>
-        </div>
-        <form class="url-form" id="urlForm">
-            <input type="text" id="longUrl" placeholder="Enter URL (e.g. example.com)" required autocomplete="off"
-                spellcheck="false" pattern="^(?:(?:https?:)?\/\/)?[^\s/$.?#][^\s]*$"
-                title="Enter a valid URL (with or without http://)">
-            <div class="loading" id="loading"></div>
-            <button type="submit">Shorten URL</button>
-        </form>
-        <div class="result" id="result">
-            <div class="result-label">Your shortened URL is ready!</div>
-            <div class="short-url">
-                <span class="url-text" id="shortUrl"></span>
-                <button class="copy-btn" id="copyBtn">Copy URL</button>
+    <div class="page-wrapper" id="pageWrapper">
+        <header>
+            <div class="logo-container">
+                <h1>riid.me</h1>
+                <span id="premiumBadge">Premium</span>
             </div>
-        </div>
-        <div class="error" id="error"></div>
+            <div class="controls">
+                <button id="darkModeToggle">Toggle Dark Mode</button>
+                <button id="clearHistoryBtn">Clear History</button>
+            </div>
+        </header>
 
-        <div class="history" id="history">
-            <h2>Recent URLs</h2>
-            <div class="history-list" id="historyList"></div>
-            <button class="clear-history" id="clearHistory">Clear History</button>
-        </div>
+        <main class="main-content">
+            <div class="form-section-wrapper">
+                <section class="form-section">
+                    <h2>Shorten a URL</h2>
+                    <div id="premiumUnlockSection">
+                        <button id="unlockPremiumBtn">Unlock Premium Features</button>
+                    </div>
+                    <form id="shortenForm">
+                        <div class="input-group">
+                            <label for="longUrl">Enter Long URL:</label>
+                            <input type="url" id="longUrl" name="longUrl" placeholder="https://example.com/very/long/url/to/shorten" required>
+                        </div>
+                        
+                        <div id="customOptionsPanel">
+                            <div class="input-group">
+                                <label for="customHandleInput">Custom Handle (Premium):</label>
+                                <input type="text" id="customHandleInput" name="customHandleInput" placeholder="your-custom-name">
+                            </div>
+                            <div class="input-group">
+                                <label for="expirationDaysInput">Expiration in Days (Premium):</label>
+                                <input type="number" id="expirationDaysInput" name="expirationDaysInput" placeholder="0 for no expiry, max 3650" min="0" max="3650">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="shortenBtn">Shorten URL</button>
+                    </form>
+                    <div class="loader" id="loader"></div>
+                </section>
+            </div>
+
+            <div class="info-section">
+                <section class="result-section hidden">
+                    <h2>Your Shortened URL</h2>
+                    <div id="result"></div>
+                    <button id="copyBtn">Copy to Clipboard</button>
+                </section>
+    
+                <section class="history-section">
+                    <h2>History</h2>
+                    <ul id="historyList"></ul>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; <span id="currentYear"></span> riid.me - Simple & Powerful URL Shortening. </p>
+        </footer>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
-        const form = document.getElementById('urlForm');
-        const result = document.getElementById('result');
-        const shortUrlEl = document.getElementById('shortUrl');
+        const longUrlInput = document.getElementById('longUrl');
+        const shortenForm = document.getElementById('shortenForm');
+        const resultDiv = document.getElementById('result');
         const copyBtn = document.getElementById('copyBtn');
-        const errorEl = document.getElementById('error');
-        const loading = document.getElementById('loading');
-        const input = document.getElementById('longUrl');
-
-        const historyEl = document.getElementById('history');
         const historyList = document.getElementById('historyList');
-        const clearHistoryBtn = document.getElementById('clearHistory');
-        const MAX_HISTORY_ITEMS = 5;
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const loader = document.getElementById('loader');
+        const toast = document.getElementById('toast');
+        const pageWrapper = document.getElementById('pageWrapper');
+        const customHandleInput = document.getElementById('customHandleInput');
+        const expirationDaysInput = document.getElementById('expirationDaysInput');
+        const unlockPremiumBtn = document.getElementById('unlockPremiumBtn');
+        const premiumUnlockSection = document.getElementById('premiumUnlockSection');
+        const customOptionsPanel = document.getElementById('customOptionsPanel');
+        const premiumBadge = document.getElementById('premiumBadge');
+        const resultSection = document.querySelector('.result-section'); // Get the result section
 
-        function isValidURL(url) {
-            const pattern = /^(?:(?:https?:)?\/\/)?[^\s/$.?#][^\s]*$/i;
-            return pattern.test(url.trim());
+        let userAuthCode = null; // Store validated auth code
+
+        // --- Toast Notifications --- 
+        function showToast(message, type = 'success', duration = 3000) {
+            toast.textContent = message;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => {
+                toast.className = 'toast ' + type;
+            }, duration - 300); // Start fade out before removing
+            setTimeout(() => {
+                toast.className = 'toast';
+            }, duration);
         }
 
-        function normalizeURL(url) {
-            if (!/^https?:\/\//i.test(url)) {
-                return 'https://' + url;
-            }
-            return url;
+        // --- Premium Features --- 
+        function activatePremiumFeatures(authCodeToStore) {
+            userAuthCode = authCodeToStore;
+            sessionStorage.setItem('riidme_auth_code', authCodeToStore);
+            pageWrapper.classList.add('premium-active');
         }
 
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
-            if (history.length > 0) {
-                historyEl.classList.add('visible');
-                renderHistory(history);
-            } else {
-                historyEl.classList.remove('visible');
-            }
+        function deactivatePremiumFeatures() {
+            userAuthCode = null;
+            sessionStorage.removeItem('riidme_auth_code');
+            pageWrapper.classList.remove('premium-active');
         }
 
-        function renderHistory(history) {
-            historyList.innerHTML = history.map(item => `
-                <div class="history-item">
-                    <div class="urls">
-                        <div class="long-url" title="${item.longUrl}">
-                            <a href="${normalizeURL(item.longUrl)}" class="url-link" target="_blank" rel="noopener noreferrer">${item.longUrl}</a>
-                        </div>
-                        <div class="short-url">
-                            <a href="${item.shortUrl}" class="url-link" target="_blank" rel="noopener noreferrer">${item.shortUrl}</a>
-                        </div>
-                    </div>
-                    <button class="copy-btn" onclick="copyHistoryUrl('${item.shortUrl}', this)">Copy</button>
-                </div>
-            `).join('');
-        }
-
-        function addToHistory(longUrl, shortUrl) {
-            const history = JSON.parse(localStorage.getItem('urlHistory') || '[]');
-
-            // Remove duplicate if exists
-            const filtered = history.filter(item => item.longUrl !== longUrl);
-
-            // Add new item to start
-            filtered.unshift({ longUrl, shortUrl });
-
-            // Keep only last MAX_HISTORY_ITEMS
-            const newHistory = filtered.slice(0, MAX_HISTORY_ITEMS);
-
-            localStorage.setItem('urlHistory', JSON.stringify(newHistory));
-            loadHistory();
-        }
-
-        async function copyHistoryUrl(url, button) {
-            try {
-                await navigator.clipboard.writeText(url);
-                const originalText = button.textContent;
-                button.textContent = 'Copied!';
-                button.classList.add('copied');
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('copied');
-                }, 2000);
-            } catch (err) {
-                errorEl.textContent = 'Failed to copy to clipboard';
-                errorEl.classList.add('visible');
-            }
-        }
-
-        clearHistoryBtn.addEventListener('click', () => {
-            localStorage.removeItem('urlHistory');
-            historyEl.classList.remove('visible');
-            historyList.innerHTML = '';
-        });
-
-        // Load history on page load
-        loadHistory();
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const url = input.value.trim();
-
-            if (!isValidURL(url)) {
-                errorEl.textContent = 'Error: Please enter a valid URL';
-                errorEl.classList.add('visible');
+        async function handleUnlockPremium() {
+            const enteredCode = prompt('Please enter your Authorization Code:');
+            if (enteredCode === null) return; // User cancelled prompt
+            if (!enteredCode.trim()) {
+                showToast('Authorization code cannot be empty.', 'error');
                 return;
             }
 
+            loader.style.display = 'block';
             try {
-                errorEl.classList.remove('visible');
-                loading.classList.add('visible');
+                const response = await fetch('/validate-auth', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ auth_code: enteredCode.trim() }),
+                });
+                
+                const data = await response.json();
 
+                if (response.ok && data.valid) {
+                    activatePremiumFeatures(enteredCode.trim());
+                    showToast('Premium features unlocked!', 'success');
+                } else {
+                    const errorMessage = data.message || 'Invalid authorization code.';
+                    showToast(errorMessage, 'error');
+                    // Ensure premium features remain deactivated if validation fails
+                    deactivatePremiumFeatures(); 
+                }
+            } catch (error) {
+                console.error('Error validating auth code:', error);
+                showToast('Error validating code. Please try again.', 'error');
+                deactivatePremiumFeatures(); 
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        // --- URL Shortening --- 
+        async function shortenUrl(event) {
+            event.preventDefault();
+            const longURL = longUrlInput.value.trim();
+            if (!longURL) {
+                showToast('Please enter a URL.', 'error');
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultDiv.textContent = '';
+            copyBtn.classList.remove('visible');
+            resultSection.classList.add('hidden'); // Hide result section
+
+            const requestBody = {
+                long_url: longURL,
+            };
+
+            if (pageWrapper.classList.contains('premium-active') && userAuthCode) {
+                requestBody.auth_code = userAuthCode;
+                if (customHandleInput.value.trim()) {
+                    requestBody.custom_handle = customHandleInput.value.trim();
+                }
+                if (expirationDaysInput.value) {
+                    const days = parseInt(expirationDaysInput.value, 10);
+                    if (!isNaN(days)) {
+                         // Backend expects pointer, so only send if value is actually set
+                        requestBody.expiration_days = days; 
+                    }
+                }
+            }
+
+            try {
                 const response = await fetch('/shorten', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ long_url: url })
+                    body: JSON.stringify(requestBody),
                 });
 
-                if (!response.ok) {
-                    throw new Error('Failed to shorten URL');
-                }
-
                 const data = await response.json();
-                const shortUrl = data.short_url;
-                shortUrlEl.innerHTML = `<a href="${shortUrl}" class="url-link" target="_blank" rel="noopener noreferrer">${shortUrl}</a>`;
-                result.classList.add('visible');
 
-                addToHistory(url, shortUrl);
-                input.value = '';
-
-            } catch (err) {
-                errorEl.textContent = 'Error: ' + err.message;
-                errorEl.classList.add('visible');
-                result.classList.remove('visible');
+                if (response.ok) {
+                    resultDiv.textContent = data.short_url;
+                    copyBtn.classList.add('visible');
+                    resultSection.classList.remove('hidden'); // Show result section
+                    addUrlToHistory(longURL, data.short_url);
+                    showToast('URL shortened successfully!', 'success');
+                } else {
+                    const errorMessage = data.error || 'Failed to shorten URL. Please try again.';
+                    showToast(errorMessage, 'error');
+                    resultDiv.textContent = '';
+                    resultSection.classList.add('hidden'); // Keep hidden on error
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('An unexpected error occurred. Please check your connection or try again later.', 'error');
+                resultDiv.textContent = '';
+                resultSection.classList.add('hidden'); // Keep hidden on error
             } finally {
-                loading.classList.remove('visible');
+                loader.style.display = 'none';
             }
-        });
+        }
 
-        copyBtn.addEventListener('click', async () => {
-            try {
-                await navigator.clipboard.writeText(shortUrlEl.textContent);
-                copyBtn.textContent = 'Copied!';
-                copyBtn.classList.add('copied');
-                setTimeout(() => {
-                    copyBtn.textContent = 'Copy URL';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            } catch (err) {
-                errorEl.textContent = 'Failed to copy to clipboard';
-                errorEl.classList.add('visible');
+        // --- Clipboard --- 
+        function copyToClipboard() {
+            if (resultDiv.textContent) {
+                navigator.clipboard.writeText(resultDiv.textContent)
+                    .then(() => showToast('Copied to clipboard!', 'success'))
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        showToast('Failed to copy.', 'error');
+                    });
             }
-        });
+        }
 
-        // Auto-focus input on page load
-        window.addEventListener('load', () => {
-            input.focus();
+        // --- History --- 
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('riidme_history')) || [];
+            history.forEach(item => addUrlToHistoryDOM(item.original, item.shortened));
+        }
+
+        function addUrlToHistory(original, shortened) {
+            const history = JSON.parse(localStorage.getItem('riidme_history')) || [];
+            // Prevent duplicates by checking original URL
+            if (!history.some(item => item.original === original && item.shortened === shortened)) {
+                history.unshift({ original, shortened }); // Add to the beginning
+                if (history.length > 20) history.pop(); // Limit history size
+                localStorage.setItem('riidme_history', JSON.stringify(history));
+                addUrlToHistoryDOM(original, shortened, true); // Add to top of the list in DOM
+            }
+        }
+
+        function addUrlToHistoryDOM(original, shortened, prepend = false) {
+            const listItem = document.createElement('li');
+            
+            const originalSpan = document.createElement('span');
+            originalSpan.className = 'original-url';
+            originalSpan.textContent = original;
+            originalSpan.title = original;
+
+            const shortSpan = document.createElement('a'); // Make it a link
+            shortSpan.className = 'short-url';
+            shortSpan.textContent = shortened.replace(/^https?:\/\//, ''); // Remove scheme for display
+            shortSpan.href = shortened;
+            shortSpan.target = "_blank"; // Open in new tab
+            shortSpan.title = `Open ${shortened}`;
+
+            listItem.appendChild(originalSpan);
+            listItem.appendChild(shortSpan);
+
+            if (prepend) {
+                historyList.insertBefore(listItem, historyList.firstChild);
+            } else {
+                historyList.appendChild(listItem);
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history?')) {
+                localStorage.removeItem('riidme_history');
+                historyList.innerHTML = '';
+                showToast('History cleared.', 'success');
+            }
+        }
+
+        // --- Dark Mode --- 
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('riidme_dark_mode', document.body.classList.contains('dark-mode'));
+            // Update --primary-rgb for focus ring
+            if (document.body.classList.contains('dark-mode')) {
+                document.documentElement.style.setProperty('--primary-rgb', getComputedStyle(document.documentElement).getPropertyValue('--primary-dark').trim().match(/\d+/g).join(', '));
+            } else {
+                document.documentElement.style.setProperty('--primary-rgb', getComputedStyle(document.documentElement).getPropertyValue('--primary-light').trim().match(/\d+/g).join(', '));
+            }
+        }
+
+        function applyInitialDarkMode() {
+            if (localStorage.getItem('riidme_dark_mode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
+            // Set initial --primary-rgb
+            if (document.body.classList.contains('dark-mode')) {
+                document.documentElement.style.setProperty('--primary-rgb', getComputedStyle(document.documentElement).getPropertyValue('--primary-dark').trim().match(/\d+/g).join(', '));
+            } else {
+                document.documentElement.style.setProperty('--primary-rgb', getComputedStyle(document.documentElement).getPropertyValue('--primary-light').trim().match(/\d+/g).join(', '));
+            }
+        }
+
+        // --- Initialization --- 
+        document.addEventListener('DOMContentLoaded', () => {
+            applyInitialDarkMode();
+            loadHistory();
+            
+            const savedAuthCode = sessionStorage.getItem('riidme_auth_code');
+            if (savedAuthCode) {
+                // No need to re-validate with backend if code is in session storage, assume it was valid.
+                // Backend will always re-validate on /shorten if premium params are sent.
+                activatePremiumFeatures(savedAuthCode);
+            }
+
+            shortenForm.addEventListener('submit', shortenUrl);
+            copyBtn.addEventListener('click', copyToClipboard);
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+            unlockPremiumBtn.addEventListener('click', handleUnlockPremium);
+
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
         });
     </script>
 </body>
-
 </html>

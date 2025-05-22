@@ -13,11 +13,14 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/teris-io/shortid"
-	"riid.me/pkg/logger"
+	customlogger "riid.me/pkg/logger"
 )
 
 type URLRequest struct {
-	LongURL string `json:"long_url"`
+	LongURL         string `json:"long_url"`
+	CustomHandle    string `json:"custom_handle,omitempty"`
+	AuthCode        string `json:"auth_code,omitempty"`
+	ExpirationDays  *int   `json:"expiration_days,omitempty"` // Pointer to distinguish 0 from not provided
 }
 
 type URLResponse struct {
@@ -33,27 +36,43 @@ type URLCheckResponse struct {
 	Error     string `json:"error,omitempty"`
 }
 
+type AuthValidationRequest struct {
+	AuthCode string `json:"auth_code"`
+}
+
+type AuthValidationResponse struct {
+	Valid   bool   `json:"valid"`
+	Message string `json:"message,omitempty"`
+}
+
 var (
 	rdb *redis.Client
 	sid *shortid.Shortid
 	config struct {
-		Port     string
-		Domain   string
-		Scheme   string
-		RedisURL string
-		RedisPW  string
-		RedisDB  int
+		Port           string
+		Domain         string
+		Scheme         string
+		RedisURL       string
+		RedisPW        string
+		RedisDB        int
+		ValidAuthCodes []string
 	}
+	validAuthCodes []string
+)
+
+const (
+	defaultExpirationDays = 365      // 1 year
+	maxExpirationDays     = 365 * 10 // 10 years
+	noExpirationValue     = 0        // Represents 'never' or no expiry for Redis TTL
 )
 
 func init() {
+	customlogger.Init()
+
 	// Load environment variables
 	if err := godotenv.Load(); err != nil {
-		logger.Debug().Msg("Warning: .env file not found")
+		customlogger.Warn().Msg("Warning: .env file not found")
 	}
-
-	// Initialize logger
-	logger.Init()
 
 	// Set config from environment
 	config.Port = getEnv("PORT", "3000")
@@ -61,6 +80,14 @@ func init() {
 	config.Scheme = getEnv("APP_SCHEME", "http")
 	config.RedisURL = getEnv("REDIS_ADDR", "localhost:6379")
 	config.RedisPW = getEnv("REDIS_PASSWORD", "")
+
+	authCodesEnv := getEnv("VALID_AUTH_CODES", "")
+	if authCodesEnv != "" {
+		validAuthCodes = strings.Split(authCodesEnv, ",")
+	} else {
+		validAuthCodes = []string{}
+		customlogger.Info().Msg("No VALID_AUTH_CODES configured. Custom handles via auth code will not be available.")
+	}
 
 	// Initialize Redis
 	rdb = redis.NewClient(&redis.Options{
@@ -74,14 +101,14 @@ func init() {
 	defer cancel()
 	
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		logger.Fatal().Err(err).Msg("Failed to connect to Redis")
+		customlogger.Fatal().Err(err).Msg("Failed to connect to Redis")
 	}
-	logger.Info().Msg("Connected to Redis successfully")
+	customlogger.Info().Msg("Connected to Redis successfully")
 
 	// Initialize shortid generator
 	generator, err := shortid.New(1, shortid.DefaultABC, 2342)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("Failed to initialize shortid generator")
+		customlogger.Fatal().Err(err).Msg("Failed to initialize shortid generator")
 	}
 	sid = generator
 }
@@ -104,39 +131,130 @@ func normalizeURL(url string) string {
 func createShortURL(w http.ResponseWriter, r *http.Request) {
 	var req URLRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		logger.Error().Err(err).Msg("Invalid request body")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		customlogger.Error().Err(err).Msg("Invalid request body")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request body"})
 		return
 	}
 
 	if req.LongURL == "" {
-		logger.Error().Msg("Empty URL provided")
-		http.Error(w, "URL is required", http.StatusBadRequest)
+		customlogger.Error().Msg("Empty URL provided")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "URL is required"})
 		return
 	}
 
 	// Normalize URL
 	normalizedURL := normalizeURL(req.LongURL)
+	var codeToUse string
+	var err error
 
-	// Generate short code
-	code, err := sid.Generate()
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to generate short code")
-		http.Error(w, "Error generating short code", http.StatusInternalServerError)
-		return
+	// Default expiration
+	redisExpirationDuration := time.Duration(defaultExpirationDays) * 24 * time.Hour
+	isValidAuthCodeForCustomFeature := false // Flag to track if auth was successful for custom features
+
+	if req.CustomHandle != "" {
+		// 1. Check for AuthCode
+		if req.AuthCode == "" {
+			customlogger.Info().Str("custom_handle", req.CustomHandle).Msg("Attempt to use custom handle without auth code")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Authorization code required for custom handle."})
+			return
+		}
+
+		// 2. Validate AuthCode
+		isValidAuthCode := false
+		for _, validCode := range validAuthCodes {
+			if req.AuthCode == validCode {
+				isValidAuthCode = true
+				break
+			}
+		}
+		if !isValidAuthCode {
+			customlogger.Info().Str("custom_handle", req.CustomHandle).Str("auth_code", req.AuthCode).Msg("Invalid auth code provided")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid authorization code."})
+			return
+		}
+		isValidAuthCodeForCustomFeature = true // Auth code is valid
+
+		// 3. Validate CustomHandle (basic validation)
+		if len(req.CustomHandle) < 3 || len(req.CustomHandle) > 30 { // Example: length 3-30
+			customlogger.Error().Str("custom_handle", req.CustomHandle).Msg("Invalid custom handle length")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Custom handle must be between 3 and 30 characters."})
+			return
+		}
+		// Add more validation for characters, reserved words etc. here if needed
+
+		// 4. Check availability in Redis
+		ctx := r.Context()
+		exists, errDb := rdb.Exists(ctx, req.CustomHandle).Result()
+		if errDb != nil {
+			customlogger.Error().Err(errDb).Str("custom_handle", req.CustomHandle).Msg("Redis error checking custom handle availability")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Error checking custom handle availability."})
+			return
+		}
+		if exists == 1 {
+			customlogger.Info().Str("custom_handle", req.CustomHandle).Msg("Custom handle already taken")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Custom handle '%s' is already taken.", req.CustomHandle)})
+			return
+		}
+		codeToUse = req.CustomHandle
+		customlogger.Info().Str("custom_handle", codeToUse).Msg("Using user-provided custom handle")
+
+		// 4. Process custom expiration if auth code was valid
+		if isValidAuthCodeForCustomFeature && req.ExpirationDays != nil {
+			days := *req.ExpirationDays
+			if days == noExpirationValue { // 0 means never expire
+				redisExpirationDuration = 0 // Redis TTL 0 means no expiry
+				customlogger.Info().Str("code", codeToUse).Msg("Setting custom URL with no expiration")
+			} else if days > 0 && days <= maxExpirationDays {
+				redisExpirationDuration = time.Duration(days) * 24 * time.Hour
+				customlogger.Info().Str("code", codeToUse).Int("days", days).Msg("Setting custom URL with custom expiration")
+			} else {
+				customlogger.Error().Str("code", codeToUse).Int("days", days).Msg("Invalid expiration days provided")
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusBadRequest)
+				json.NewEncoder(w).Encode(map[string]string{"error": fmt.Sprintf("Expiration must be 0 (for no expiry) or between 1 and %d days.", maxExpirationDays)})
+				return
+			}
+		}
+
+	} else {
+		// Generate short code if no custom handle is provided
+		codeToUse, err = sid.Generate()
+		if err != nil {
+			customlogger.Error().Err(err).Msg("Failed to generate short code")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Error generating short code"})
+			return
+		}
 	}
 
-	// Store in Redis with 1 year expiration
+	// Store in Redis with determined expiration
 	ctx := r.Context()
-	err = rdb.Set(ctx, code, normalizedURL, 365*24*time.Hour).Err()
+	err = rdb.Set(ctx, codeToUse, normalizedURL, redisExpirationDuration).Err()
 	if err != nil {
-		logger.Error().Err(err).Str("code", code).Msg("Failed to store URL in Redis")
-		http.Error(w, "Error storing URL", http.StatusInternalServerError)
+		customlogger.Error().Err(err).Str("code", codeToUse).Msg("Failed to store URL in Redis")
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Error storing URL"})
 		return
 	}
 
-	shortURL := fmt.Sprintf("%s://%s/%s", config.Scheme, config.Domain, code)
-	logger.Info().Str("code", code).Str("long_url", normalizedURL).Str("short_url", shortURL).Msg("URL shortened successfully")
+	shortURL := fmt.Sprintf("%s://%s/%s", config.Scheme, config.Domain, codeToUse)
+	customlogger.Info().Str("code", codeToUse).Str("long_url", normalizedURL).Str("short_url", shortURL).Msg("URL shortened successfully")
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(URLResponse{
@@ -152,16 +270,16 @@ func redirectToLongURL(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	longURL, err := rdb.Get(ctx, code).Result()
 	if err == redis.Nil {
-		logger.Error().Str("code", code).Msg("Short URL not found")
+		customlogger.Error().Str("code", code).Msg("Short URL not found")
 		http.Error(w, "Short URL not found", http.StatusNotFound)
 		return
 	} else if err != nil {
-		logger.Error().Err(err).Str("code", code).Msg("Failed to retrieve URL from Redis")
+		customlogger.Error().Err(err).Str("code", code).Msg("Failed to retrieve URL from Redis")
 		http.Error(w, "Error retrieving URL", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info().Str("code", code).Str("long_url", longURL).Msg("Redirecting to long URL")
+	customlogger.Info().Str("code", code).Str("long_url", longURL).Msg("Redirecting to long URL")
 	http.Redirect(w, r, longURL, http.StatusMovedPermanently)
 }
 
@@ -189,11 +307,47 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(status)
 }
 
+func validateAuthCodeHandler(w http.ResponseWriter, r *http.Request) {
+	var req AuthValidationRequest
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		customlogger.Error().Err(err).Msg("Failed to decode request body for validateAuthCode")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(AuthValidationResponse{Valid: false, Message: "Invalid request payload"})
+		return
+	}
+
+	if req.AuthCode == "" {
+		customlogger.Warn().Msg("Empty auth_code provided for validation")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(AuthValidationResponse{Valid: false, Message: "Authorization code cannot be empty"})
+		return
+	}
+
+	isValidCode := false // Renamed to avoid conflict with function name if any
+	for _, validCode := range validAuthCodes { // Corrected: use global validAuthCodes
+		if req.AuthCode == validCode {
+			isValidCode = true
+			break
+		}
+	}
+
+	if isValidCode {
+		customlogger.Info().Msg("Auth code validated successfully")
+		json.NewEncoder(w).Encode(AuthValidationResponse{Valid: true})
+	} else {
+		customlogger.Warn().Str("auth_code_attempt", req.AuthCode).Msg("Invalid auth code provided for validation")
+		json.NewEncoder(w).Encode(AuthValidationResponse{Valid: false, Message: "Invalid authorization code"})
+	}
+}
+
 func main() {
 	router := mux.NewRouter()
 	
 	// API routes
 	router.HandleFunc("/shorten", createShortURL).Methods("POST")
+	router.HandleFunc("/validate-auth", validateAuthCodeHandler).Methods("POST")
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 	router.HandleFunc("/{shortcode}", redirectToLongURL).Methods("GET")
 	
@@ -202,6 +356,10 @@ func main() {
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 	router.PathPrefix("/").Handler(fs)
 	
-	logger.Info().Str("port", config.Port).Msg("Server starting")
-	logger.Fatal().Err(http.ListenAndServe(":"+config.Port, router)).Msg("Server stopped")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = config.Port
+	}
+	customlogger.Info().Str("port", port).Msg("Server starting")
+	customlogger.Fatal().Err(http.ListenAndServe(":"+port, router)).Msg("Server stopped")
 }

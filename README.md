@@ -29,6 +29,9 @@ $shortUrl = Riidme::shorten('https://example.com');
 - 💾 Local history storage
 - 🔗 Clickable shortened links
 - 🎯 No external dependencies (frontend)
+- ✨ **Premium:** Custom URL Handles (e.g., `your-custom-name`)
+- ✨ **Premium:** Custom Expiration Dates for links (0 for no expiry, up to 3650 days)
+- 🔐 Unlock premium features in the UI using a valid authorization code.
 
 ## Tech Stack
 
@@ -36,6 +39,19 @@ $shortUrl = Riidme::shorten('https://example.com');
 - **Frontend**: Vanilla JavaScript, CSS3
 - **Database**: Redis
 - **Server**: Apache2 (for production deployment)
+
+## API Endpoints
+
+The backend provides the following API endpoints:
+
+- `POST /shorten`: Creates a new short URL.
+  - Payload: `{ "long_url": "string", "custom_handle": "string_optional", "expiration_days": "int_optional", "auth_code": "string_optional" }`
+  - `custom_handle` and `expiration_days` require a valid `auth_code` to be included in the request.
+- `GET /{shortcode}`: Redirects to the original long URL.
+- `POST /validate-auth`: Validates an authorization code to unlock premium features in the UI.
+  - Payload: `{ "auth_code": "string" }`
+  - Response: `{ "valid": true/false, "message": "string_optional" }`
+- `GET /health`: Checks the health of the service (e.g., Redis connection).
 
 ## Prerequisites
 
@@ -59,6 +75,12 @@ $shortUrl = Riidme::shorten('https://example.com');
 3. Set up environment variables (copy from example):
    ```bash
    cp .env.example .env
+   ```
+   Edit the `.env` file to set your `REDIS_ADDR`, `PORT`, `APP_DOMAIN`, `APP_SCHEME`, etc.
+   To enable premium features (custom handles, custom expiration), set the `VALID_AUTH_CODES` variable with a comma-separated list of codes. These codes are used to unlock the premium feature UI and authorize their use in the `/shorten` endpoint.
+   Example:
+   ```
+   VALID_AUTH_CODES=PREMIUM_CODE_123,ANOTHER_CODE_456
    ```
 
 4. Start Redis:
@@ -279,4 +301,4 @@ curl -X POST https://riid.me/shorten \
 }
 ```
 
-For more details about our API and integration options, visit the SDK repositories linked above. 
+For more details about our API and integration options, visit the SDK repositories linked above.
