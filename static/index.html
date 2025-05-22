@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>riid.me - Modern URL Shortener</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --background-light: #f7f9fc;
@@ -21,15 +24,19 @@
             --toast-success-bg-light: #2ecc71;
             --toast-error-bg-light: #e74c3c;
             --toast-text-light: #ffffff;
-            --premium-accent-light: #27ae60; /* A nice green for premium */
+            --premium-accent-light: #27ae60;
+            /* A nice green for premium */
             --premium-badge-bg-light: var(--premium-accent-light);
             --premium-badge-text-light: #ffffff;
 
-            --background-dark: #2c3e50; /* Darker, more bluish */
+            --background-dark: #2c3e50;
+            /* Darker, more bluish */
             --text-dark: #ecf0f1;
-            --primary-dark: #5dade2; /* Lighter blue for dark mode */
+            --primary-dark: #5dade2;
+            /* Lighter blue for dark mode */
             --primary-hover-dark: #4a90e2;
-            --secondary-dark: #34495e; /* Darker secondary */
+            --secondary-dark: #34495e;
+            /* Darker secondary */
             --border-dark: #4a627a;
             --input-bg-dark: #3b5266;
             --input-border-dark: #5e7a93;
@@ -39,9 +46,11 @@
             --toast-success-bg-dark: #27ae60;
             --toast-error-bg-dark: #c0392b;
             --toast-text-dark: #ffffff;
-            --premium-accent-dark: #2ecc71; /* Brighter green for dark mode */
+            --premium-accent-dark: #2ecc71;
+            /* Brighter green for dark mode */
             --premium-badge-bg-dark: var(--premium-accent-dark);
-            --premium-badge-text-dark: #1e2b37; /* Darker text for light badge */
+            --premium-badge-text-dark: #1e2b37;
+            /* Darker text for light badge */
 
             /* Default to light theme */
             --background: var(--background-light);
@@ -65,8 +74,8 @@
             --font-sans: 'Inter', sans-serif;
             --font-mono: 'Roboto Mono', monospace;
             --border-radius: 8px;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 10px rgba(0,0,0,0.08);
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 10px rgba(0, 0, 0, 0.08);
             --transition-speed: 0.3s;
         }
 
@@ -205,12 +214,14 @@
         @media (min-width: 768px) {
             .main-content {
                 flex-direction: row;
-                align-items: flex-start; /* Ensure columns can have independent heights */
+                align-items: flex-start;
+                /* Ensure columns can have independent heights */
             }
         }
 
         .form-section-wrapper {
-            flex: 1 1 55%; /* Allow form to take a bit more space if needed */
+            flex: 1 1 55%;
+            /* Allow form to take a bit more space if needed */
             min-width: 300px;
         }
 
@@ -219,7 +230,8 @@
             padding: 25px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-md);
-            border-left: 5px solid transparent; /* Placeholder for premium accent */
+            border-left: 5px solid transparent;
+            /* Placeholder for premium accent */
             transition: border-left-color var(--transition-speed) ease, background-color var(--transition-speed) ease;
         }
 
@@ -262,15 +274,22 @@
         .input-group input[type="number"]:focus {
             outline: none;
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 52, 152, 219), 0.25); /* Use RGB for primary for box-shadow */
+            box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 52, 152, 219), 0.25);
+            /* Use RGB for primary for box-shadow */
         }
 
         /* Helper to set --primary-rgb based on current theme */
-        body:not(.dark-mode) { --primary-rgb: 52, 152, 219; }
-        body.dark-mode { --primary-rgb: 93, 173, 226; }
+        body:not(.dark-mode) {
+            --primary-rgb: 52, 152, 219;
+        }
+
+        body.dark-mode {
+            --primary-rgb: 93, 173, 226;
+        }
 
 
-        button#shortenBtn, button#unlockPremiumBtn {
+        button#shortenBtn,
+        button#unlockPremiumBtn {
             width: 100%;
             padding: 12px 20px;
             background-color: var(--primary);
@@ -284,10 +303,13 @@
             text-align: center;
         }
 
-        button#shortenBtn:hover, button#unlockPremiumBtn:hover {
+        button#shortenBtn:hover,
+        button#unlockPremiumBtn:hover {
             background-color: var(--primary-hover);
         }
-        button#shortenBtn:active, button#unlockPremiumBtn:active {
+
+        button#shortenBtn:active,
+        button#unlockPremiumBtn:active {
             transform: scale(0.98);
         }
 
@@ -295,14 +317,16 @@
             margin-bottom: 20px;
             transition: opacity var(--transition-speed) ease, max-height var(--transition-speed) ease, margin var(--transition-speed) ease, padding var(--transition-speed) ease;
             overflow: hidden;
-            max-height: 100px; /* Enough for the button */
+            max-height: 100px;
+            /* Enough for the button */
         }
 
         .page-wrapper.premium-active #premiumUnlockSection {
             opacity: 0;
             max-height: 0;
             margin-bottom: 0;
-            padding-top: 0; /* To avoid padding jump during transition */
+            padding-top: 0;
+            /* To avoid padding jump during transition */
             padding-bottom: 0;
             pointer-events: none;
         }
@@ -320,7 +344,8 @@
 
         .page-wrapper.premium-active #customOptionsPanel {
             opacity: 1;
-            max-height: 500px; /* Adjust as needed for content */
+            max-height: 500px;
+            /* Adjust as needed for content */
             visibility: visible;
             transition: opacity var(--transition-speed) ease, max-height var(--transition-speed) ease, margin-top var(--transition-speed) ease, padding-top var(--transition-speed) ease, visibility 0s 0s;
         }
@@ -336,14 +361,19 @@
         @media (min-width: 768px) {
             .info-section {
                 position: sticky;
-                top: 20px; /* Adjust based on your header or other fixed elements */
-                align-self: flex-start; /* Important for sticky to work correctly within flex */
-                max-height: calc(100vh - 40px); /* Prevent it from being taller than viewport */
-                overflow-y: auto; /* Allow scrolling within if content overflows */
+                top: 20px;
+                /* Adjust based on your header or other fixed elements */
+                align-self: flex-start;
+                /* Important for sticky to work correctly within flex */
+                max-height: calc(100vh - 40px);
+                /* Prevent it from being taller than viewport */
+                overflow-y: auto;
+                /* Allow scrolling within if content overflows */
             }
         }
 
-        .result-section, .history-section {
+        .result-section,
+        .history-section {
             background-color: var(--secondary);
             padding: 20px;
             border-radius: var(--border-radius);
@@ -355,7 +385,8 @@
             display: none;
         }
 
-        .result-section h2, .history-section h2 {
+        .result-section h2,
+        .history-section h2 {
             font-size: 1.3rem;
             margin-bottom: 15px;
             font-weight: 600;
@@ -370,7 +401,8 @@
             border-radius: var(--border-radius);
             border: 1px solid var(--border);
             margin-bottom: 10px;
-            min-height: 40px; /* So it doesn't collapse when empty */
+            min-height: 40px;
+            /* So it doesn't collapse when empty */
             display: flex;
             align-items: center;
             transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
@@ -403,7 +435,8 @@
             list-style: none;
             max-height: 300px;
             overflow-y: auto;
-            padding-right: 10px; /* For scrollbar */
+            padding-right: 10px;
+            /* For scrollbar */
         }
 
         #historyList li {
@@ -429,9 +462,31 @@
         }
 
         #historyList li .short-url {
-            font-family: var(--font-mono);
-            color: var(--primary);
             font-weight: 500;
+            color: var(--primary);
+            text-decoration: none;
+            margin-left: 10px;
+            word-break: break-all;
+        }
+
+        #historyList li .short-url:hover {
+            text-decoration: underline;
+        }
+
+        #historyList li .stats-btn {
+            background-color: var(--secondary);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 3px 8px;
+            font-size: 0.8em;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+            transition: background-color var(--transition-speed);
+        }
+
+        #historyList li .stats-btn:hover {
+            background-color: var(--border);
         }
 
         #historyList li:last-child {
@@ -446,12 +501,18 @@
             height: 30px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .toast {
@@ -486,7 +547,8 @@
         footer {
             text-align: center;
             padding: 20px 0;
-            margin-top: auto; /* Pushes footer to bottom */
+            margin-top: auto;
+            /* Pushes footer to bottom */
             font-size: 0.9rem;
             color: var(--text);
             border-top: 1px solid var(--border);
@@ -505,7 +567,8 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.6);
-            display: none; /* Hidden by default */
+            display: none;
+            /* Hidden by default */
             justify-content: center;
             align-items: center;
             z-index: 1000;
@@ -549,13 +612,11 @@
         #statsModalClickList {
             list-style-type: none;
             padding-left: 0;
-            max-height: 300px; /* Or adjust as needed */
+            max-height: 200px;
+            /* Limit height for click list */
             overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: var(--border-radius);
-            padding: 10px;
-            margin-top: 10px;
-            background-color: var(--input-bg); /* Slightly different background for the list */
+            /* Add scroll for click list if it overflows */
+            margin-bottom: 10px;
         }
 
         #statsModalClickList li {
@@ -572,11 +633,47 @@
             font-weight: 600;
             color: var(--primary);
         }
+
         #statsModalClickList .click-details span {
             display: block;
             margin-left: 10px;
             font-size: 0.85rem;
             color: var(--text-secondary);
+        }
+
+        .pagination-btn {
+            background-color: var(--primary);
+            color: var(--button-text);
+            /* Ensure this contrasts with modal background */
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+            margin: 0 5px;
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .pagination-btn:disabled {
+            background-color: var(--secondary);
+            color: var(--text);
+            /* Ensure disabled text is also visible */
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        #statsModalPaginationControls {
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+
+        #statsPageInfo {
+            margin: 0 10px;
+            font-size: 0.9em;
         }
 
         /* Lookup Stats Section */
@@ -585,7 +682,8 @@
             padding: 20px;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-sm);
-            margin-bottom: 20px; /* Space before history */
+            margin-bottom: 20px;
+            /* Space before history */
         }
 
         .lookup-stats-section h2 {
@@ -612,6 +710,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="page-wrapper" id="pageWrapper">
         <header>
@@ -635,17 +734,20 @@
                     <form id="shortenForm">
                         <div class="input-group">
                             <label for="longUrl">Enter Long URL:</label>
-                            <input type="url" id="longUrl" name="longUrl" placeholder="https://example.com/very/long/url/to/shorten" required>
+                            <input type="url" id="longUrl" name="longUrl"
+                                placeholder="https://example.com/very/long/url/to/shorten" required>
                         </div>
-                        
+
                         <div id="customOptionsPanel">
                             <div class="input-group">
                                 <label for="customHandleInput">Custom Handle (Premium):</label>
-                                <input type="text" id="customHandleInput" name="customHandleInput" placeholder="your-custom-name">
+                                <input type="text" id="customHandleInput" name="customHandleInput"
+                                    placeholder="your-custom-name">
                             </div>
                             <div class="input-group">
                                 <label for="expirationDaysInput">Expiration in Days (Premium):</label>
-                                <input type="number" id="expirationDaysInput" name="expirationDaysInput" placeholder="0 for no expiry, max 3650" min="0" max="3650">
+                                <input type="number" id="expirationDaysInput" name="expirationDaysInput"
+                                    placeholder="0 for no expiry, max 3650" min="0" max="3650">
                             </div>
                         </div>
 
@@ -665,7 +767,8 @@
                 <section class="lookup-stats-section">
                     <h2>Lookup Link Statistics</h2>
                     <div class="input-group">
-                        <input type="text" id="lookupShortCodeInput" placeholder="Enter short code (e.g., abc123)" aria-label="Enter short code for statistics">
+                        <input type="text" id="lookupShortCodeInput" placeholder="Enter short code (e.g., abc123)"
+                            aria-label="Enter short code for statistics">
                         <button id="lookupStatsBtn" class="btn">View Stats</button>
                     </div>
                 </section>
@@ -690,13 +793,20 @@
             <h3 id="statsModalTitle">Link Statistics</h3>
             <p><strong>Short Code:</strong> <span id="statsModalShortCode"></span></p>
             <p><strong>Total Clicks:</strong> <span id="statsModalTotalClicks"></span></p>
+
+            <div id="statsModalQrCodeContainer"
+                style="margin-top: 15px; margin-bottom:15px; text-align: center; min-height: 140px;">
+                <div id="statsQrCodeImage"></div> <!-- QR Code will be rendered here by JS -->
+            </div>
+
             <h4>Click Details:</h4>
             <ul id="statsModalClickList">
                 <!-- Click items will be populated here by JS -->
             </ul>
-            <div id="statsModalQrCodeContainer" style="margin-top: 20px; text-align: center; min-height: 50px;">
-                <!-- QR Code will be here (e.g., <img id="qrCodeImage" src="" alt="QR Code">) -->
-                <p style="font-size:0.8em; color: var(--text-secondary);">QR code will appear here.</p>  <!-- Placeholder text -->
+            <div id="statsModalPaginationControls" style="text-align: center; margin-top: 10px; display: none;">
+                <button id="statsPrevPageBtn" class="pagination-btn">Previous</button>
+                <span id="statsPageInfo" style="margin: 0 10px; font-size: 0.9em;"></span>
+                <button id="statsNextPageBtn" class="pagination-btn">Next</button>
             </div>
         </div>
     </div>
@@ -730,12 +840,19 @@
         const statsModalTotalClicksEl = document.getElementById('statsModalTotalClicks'); // Renamed for clarity
         const statsModalClickList = document.getElementById('statsModalClickList');
         const statsModalQrCodeContainer = document.getElementById('statsModalQrCodeContainer');
+        const statsModalPaginationControls = document.getElementById('statsModalPaginationControls');
+        const statsPrevPageBtn = document.getElementById('statsPrevPageBtn');
+        const statsNextPageBtn = document.getElementById('statsNextPageBtn');
+        const statsPageInfo = document.getElementById('statsPageInfo');
 
         // Lookup Stats Elements
         const lookupShortCodeInput = document.getElementById('lookupShortCodeInput');
         const lookupStatsBtn = document.getElementById('lookupStatsBtn');
 
         let userAuthCode = null; // Store validated auth code
+        let allStatClicks = [];
+        let currentStatsPage = 1;
+        const statsItemsPerPage = 10; // Show 10 clicks per page
 
         // --- Toast Notifications --- 
         function showToast(message, type = 'info') {
@@ -766,29 +883,77 @@
             }
         });
 
-        function populateStatsModal(data) {
-            statsModalShortCodeEl.textContent = data.short_code || 'N/A';
-            statsModalTotalClicksEl.textContent = data.total_clicks !== undefined ? data.total_clicks : 'N/A';
-            statsModalClickList.innerHTML = ''; // Clear previous list
+        function renderStatsClickPage() {
+            statsModalClickList.innerHTML = ''; // Clear previous page's list items
+            statsModalPaginationControls.style.display = 'none';
 
-            if (data.clicks && data.clicks.length > 0) {
-                data.clicks.forEach(click => {
-                    const listItem = document.createElement('li');
+            if (!allStatClicks || allStatClicks.length === 0) {
+                statsModalClickList.innerHTML = '<li>No click details available.</li>';
+                return;
+            }
+
+            statsModalPaginationControls.style.display = 'block';
+            const totalPages = Math.ceil(allStatClicks.length / statsItemsPerPage);
+            currentStatsPage = Math.max(1, Math.min(currentStatsPage, totalPages)); // Ensure page is within bounds
+
+            const startIndex = (currentStatsPage - 1) * statsItemsPerPage;
+            const endIndex = startIndex + statsItemsPerPage;
+            const pageClicks = allStatClicks.slice(startIndex, endIndex);
+
+            if (pageClicks.length === 0 && allStatClicks.length > 0) {
+                statsModalClickList.innerHTML = '<li>No click details on this page.</li>'; // Should not happen if currentStatsPage is managed well
+            } else {
+                pageClicks.forEach(click => {
                     const timestamp = new Date(click.timestamp).toLocaleString();
+                    // Assuming click.user_agent and click.referrer might be objects like {String: "value", Valid: true}
+                    const userAgent = (click.user_agent && typeof click.user_agent.String === 'string') ? click.user_agent.String : 'N/A';
+                    const referrer = (click.referrer && typeof click.referrer.String === 'string') ? click.referrer.String : 'N/A';
+
+                    const listItem = document.createElement('li');
                     listItem.innerHTML = `
                         <div class="click-timestamp">${timestamp}</div>
                         <div class="click-details">
-                            <span>User Agent: ${click.user_agent || 'N/A'}</span>
-                            <span>Referrer: ${click.referrer || 'N/A'}</span>
+                            <span>User Agent: ${userAgent}</span>
+                            <span>Referrer: ${referrer}</span>
                         </div>
                     `;
                     statsModalClickList.appendChild(listItem);
                 });
-            } else {
-                statsModalClickList.innerHTML = '<li>No click details available.</li>';
             }
-            // Placeholder for QR code logic - for now, it just shows the container
-            statsModalQrCodeContainer.style.display = 'block'; // Or logic to show/hide if QR is generated
+
+            statsPageInfo.textContent = `Page ${currentStatsPage} of ${totalPages}`;
+            statsPrevPageBtn.disabled = currentStatsPage === 1;
+            statsNextPageBtn.disabled = currentStatsPage === totalPages;
+        }
+
+        function populateStatsModal(data) {
+            statsModalShortCodeEl.textContent = data.short_code || 'N/A';
+            statsModalTotalClicksEl.textContent = data.total_clicks !== undefined ? data.total_clicks : 'N/A';
+
+            allStatClicks = data.clicks || [];
+            currentStatsPage = 1;
+            renderStatsClickPage(); // Initial render of the first page of clicks
+
+            // QR Code using API endpoint
+            statsModalQrCodeContainer.style.display = 'block';
+            const qrCodeDiv = document.getElementById('statsQrCodeImage');
+            qrCodeDiv.innerHTML = ''; // Clear previous QR code
+
+            if (data.short_code) {
+                const img = document.createElement('img');
+                img.src = `/api/qr/${data.short_code}`;
+                img.alt = 'QR Code for ' + data.short_code;
+                img.style.display = 'block';
+                img.style.margin = '0 auto';
+                img.style.width = '128px'; // Optional: Set a consistent size
+                img.style.height = '128px'; // Optional: Set a consistent size
+                img.onerror = function () { // Handle image loading errors
+                    qrCodeDiv.innerHTML = '<p style="font-size:0.8em; color: var(--text-secondary);">Error loading QR code.</p>';
+                };
+                qrCodeDiv.appendChild(img);
+            } else {
+                qrCodeDiv.innerHTML = '<p style="font-size:0.8em; color: var(--text-secondary);">QR code not available.</p>';
+            }
         }
 
         async function fetchAndShowStats(shortCode) {
@@ -877,7 +1042,7 @@
                     },
                     body: JSON.stringify({ auth_code: enteredCode.trim() }),
                 });
-                
+
                 const data = await response.json();
 
                 if (response.ok && data.valid) {
@@ -887,12 +1052,12 @@
                     const errorMessage = data.message || 'Invalid authorization code.';
                     showToast(errorMessage, 'error');
                     // Ensure premium features remain deactivated if validation fails
-                    deactivatePremiumFeatures(); 
+                    deactivatePremiumFeatures();
                 }
             } catch (error) {
                 console.error('Error validating auth code:', error);
                 showToast('Error validating code. Please try again.', 'error');
-                deactivatePremiumFeatures(); 
+                deactivatePremiumFeatures();
             } finally {
                 loader.style.display = 'none';
             }
@@ -924,8 +1089,8 @@
                 if (expirationDaysInput.value) {
                     const days = parseInt(expirationDaysInput.value, 10);
                     if (!isNaN(days)) {
-                         // Backend expects pointer, so only send if value is actually set
-                        requestBody.expiration_days = days; 
+                        // Backend expects pointer, so only send if value is actually set
+                        requestBody.expiration_days = days;
                     }
                 }
             }
@@ -978,7 +1143,7 @@
         // --- History --- 
         function loadHistory() {
             const history = JSON.parse(localStorage.getItem('riidme_history')) || [];
-            history.forEach(item => addUrlToHistory(item.original, item.shortened));
+            history.forEach(item => addUrlToHistoryDOM(item.original, item.shortened, false)); // Corrected: directly update DOM, append in stored order (newest first)
         }
 
         function addUrlToHistory(original, shortened) {
@@ -994,7 +1159,7 @@
 
         function addUrlToHistoryDOM(original, shortened, prepend = false) {
             const listItem = document.createElement('li');
-            
+
             const originalSpan = document.createElement('span');
             originalSpan.className = 'original-url';
             originalSpan.textContent = original;
@@ -1007,8 +1172,27 @@
             shortSpan.target = "_blank"; // Open in new tab
             shortSpan.title = `Open ${shortened}`;
 
+            const statsButton = document.createElement('button');
+            statsButton.className = 'stats-btn';
+            statsButton.textContent = 'Stats';
+            statsButton.title = `View stats for ${shortened.replace(/^https?:\/\//, '')}`;
+            statsButton.onclick = function () {
+                // Extract short code from the full shortened URL
+                let shortCodeToLookup = '';
+                try {
+                    const urlObj = new URL(shortened);
+                    shortCodeToLookup = urlObj.pathname.replace(/^\/+/, '');
+                } catch (e) { // If not a full URL (e.g. just the code was stored, unlikely here but good practice)
+                    shortCodeToLookup = shortened.replace(/^https?:\/\//, '').split('/').pop();
+                }
+                if (shortCodeToLookup) {
+                    fetchAndShowStats(shortCodeToLookup);
+                }
+            };
+
             listItem.appendChild(originalSpan);
             listItem.appendChild(shortSpan);
+            listItem.appendChild(statsButton);
 
             if (prepend) {
                 historyList.insertBefore(listItem, historyList.firstChild);
@@ -1055,7 +1239,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             applyInitialDarkMode();
             loadHistory();
-            
+
             const savedAuthCode = sessionStorage.getItem('riidme_auth_code');
             if (savedAuthCode) {
                 // No need to re-validate with backend if code is in session storage, assume it was valid.
@@ -1082,6 +1266,22 @@
                 headerClearHistoryBtn.classList.add('hidden');
             }
         }
+
+        statsPrevPageBtn.addEventListener('click', () => {
+            if (currentStatsPage > 1) {
+                currentStatsPage--;
+                renderStatsClickPage();
+            }
+        });
+
+        statsNextPageBtn.addEventListener('click', () => {
+            const totalPages = Math.ceil(allStatClicks.length / statsItemsPerPage);
+            if (currentStatsPage < totalPages) {
+                currentStatsPage++;
+                renderStatsClickPage();
+            }
+        });
     </script>
 </body>
+
 </html>
