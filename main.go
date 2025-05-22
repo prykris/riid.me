@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	_ "modernc.org/sqlite"
 	"github.com/teris-io/shortid"
 	customlogger "riid.me/pkg/logger"
 )
@@ -45,9 +47,22 @@ type AuthValidationResponse struct {
 	Message string `json:"message,omitempty"`
 }
 
+type ClickDetail struct {
+	Timestamp string `json:"timestamp"`
+	UserAgent string `json:"user_agent,omitempty"`
+	Referrer  string `json:"referrer,omitempty"`
+}
+
+type LinkStatsResponse struct {
+	ShortCode   string        `json:"short_code"`
+	TotalClicks int           `json:"total_clicks"`
+	Clicks      []ClickDetail `json:"clicks"`
+}
+
 var (
 	rdb *redis.Client
 	sid *shortid.Shortid
+	statsDB *sql.DB
 	config struct {
 		Port           string
 		Domain         string
@@ -111,6 +126,42 @@ func init() {
 		customlogger.Fatal().Err(err).Msg("Failed to initialize shortid generator")
 	}
 	sid = generator
+
+	// Initialize SQLite Database for Statistics
+	sqliteDBPath := os.Getenv("SQLITE_DB_PATH")
+	if sqliteDBPath == "" {
+		sqliteDBPath = "./riidme_stats.db" // Default path
+		customlogger.Warn().Msgf("SQLITE_DB_PATH not set, defaulting to %s", sqliteDBPath)
+	}
+
+	var errDB error
+	// statsDB, errDB = sql.Open("sqlite3", sqliteDBPath) // Old driver name
+	statsDB, errDB = sql.Open("sqlite", sqliteDBPath) // Correct driver name for modernc.org/sqlite
+	if errDB != nil {
+		customlogger.Fatal().Err(errDB).Msg("Failed to open SQLite database for statistics")
+	}
+	// Ping to ensure connection is alive (optional, but good practice)
+	if err := statsDB.Ping(); err != nil {
+		customlogger.Fatal().Err(err).Msg("Failed to ping SQLite database")
+	}
+
+	customlogger.Info().Msgf("Successfully connected to SQLite database at %s", sqliteDBPath)
+
+	// Create clicks table if it doesn't exist
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS clicks (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		short_code TEXT NOT NULL,
+		timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+		user_agent TEXT,
+		referrer TEXT
+	);`
+
+	_, errDB = statsDB.Exec(createTableSQL)
+	if errDB != nil {
+		customlogger.Fatal().Err(errDB).Msg("Failed to create clicks table in SQLite database")
+	}
+	customlogger.Info().Msg("Clicks table ensured in SQLite database")
 }
 
 func getEnv(key, fallback string) string {
@@ -263,6 +314,7 @@ func createShortURL(w http.ResponseWriter, r *http.Request) {
 }
 
 func redirectToLongURL(w http.ResponseWriter, r *http.Request) {
+	customlogger.Debug().Msg("redirectToLongURL handler invoked") // Added for debugging
 	vars := mux.Vars(r)
 	code := vars["shortcode"]
 
@@ -277,6 +329,20 @@ func redirectToLongURL(w http.ResponseWriter, r *http.Request) {
 		customlogger.Error().Err(err).Str("code", code).Msg("Failed to retrieve URL from Redis")
 		http.Error(w, "Error retrieving URL", http.StatusInternalServerError)
 		return
+	}
+
+	// Record the click event before redirecting
+	userAgent := r.UserAgent()
+	referrer := r.Referer()
+
+	insertSQL := `INSERT INTO clicks (short_code, user_agent, referrer) VALUES (?, ?, ?)`
+	_, errExec := statsDB.ExecContext(ctx, insertSQL, code, userAgent, referrer)
+	if errExec != nil {
+		// Log the error, but don't block the redirect. 
+		// Depending on requirements, you might want to handle this differently.
+		customlogger.Error().Err(errExec).Str("short_code", code).Msg("Failed to record click event")
+	} else {
+		customlogger.Info().Str("short_code", code).Msg("Click event recorded")
 	}
 
 	customlogger.Info().Str("code", code).Str("long_url", longURL).Msg("Redirecting to long URL")
@@ -342,12 +408,60 @@ func validateAuthCodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getLinkStatsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	shortCode := vars["shortcode"]
+
+	ctx := r.Context()
+
+	rows, err := statsDB.QueryContext(ctx, "SELECT timestamp, user_agent, referrer FROM clicks WHERE short_code = ? ORDER BY timestamp DESC", shortCode)
+	if err != nil {
+		customlogger.Error().Err(err).Str("short_code", shortCode).Msg("Failed to query click statistics")
+		http.Error(w, `{"error":"Failed to retrieve statistics"}`, http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var clicks []ClickDetail
+	for rows.Next() {
+		var cd ClickDetail
+		// Ensure to scan into variables that can handle NULLs from DB if applicable, or use sql.NullString etc.
+		// For simplicity, assuming user_agent and referrer can be empty strings if NULL.
+		var userAgent sql.NullString
+		var referrer sql.NullString
+		if err := rows.Scan(&cd.Timestamp, &userAgent, &referrer); err != nil {
+			customlogger.Error().Err(err).Str("short_code", shortCode).Msg("Failed to scan click detail row")
+			// Decide if you want to skip this row or fail the request
+			continue // Skipping problematic row for now
+		}
+		cd.UserAgent = userAgent.String
+		cd.Referrer = referrer.String
+		clicks = append(clicks, cd)
+	}
+
+	if err = rows.Err(); err != nil { // Check for errors during iteration
+		customlogger.Error().Err(err).Str("short_code", shortCode).Msg("Error iterating click detail rows")
+		http.Error(w, `{"error":"Failed to process statistics"}`, http.StatusInternalServerError)
+		return
+	}
+
+	response := LinkStatsResponse{
+		ShortCode:   shortCode,
+		TotalClicks: len(clicks),
+		Clicks:      clicks,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
 func main() {
 	router := mux.NewRouter()
 	
 	// API routes
 	router.HandleFunc("/shorten", createShortURL).Methods("POST")
 	router.HandleFunc("/validate-auth", validateAuthCodeHandler).Methods("POST")
+	router.HandleFunc("/api/stats/{shortcode}", getLinkStatsHandler).Methods("GET")
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 	router.HandleFunc("/{shortcode}", redirectToLongURL).Methods("GET")
 	

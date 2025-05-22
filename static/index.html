@@ -496,6 +496,120 @@
         .hidden {
             display: none !important;
         }
+
+        /* Stats Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--secondary);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: var(--text-color);
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            margin-bottom: 10px;
+        }
+
+        #statsModalClickList {
+            list-style-type: none;
+            padding-left: 0;
+            max-height: 300px; /* Or adjust as needed */
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            margin-top: 10px;
+            background-color: var(--input-bg); /* Slightly different background for the list */
+        }
+
+        #statsModalClickList li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.9rem;
+        }
+
+        #statsModalClickList li:last-child {
+            border-bottom: none;
+        }
+
+        #statsModalClickList .click-timestamp {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        #statsModalClickList .click-details span {
+            display: block;
+            margin-left: 10px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Lookup Stats Section */
+        .lookup-stats-section {
+            background-color: var(--secondary);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 20px; /* Space before history */
+        }
+
+        .lookup-stats-section h2 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        /* Style the 'View Stats' button */
+        #lookupStatsBtn {
+            background-color: var(--primary);
+            color: var(--button-text);
+            border: none;
+            padding: 8px 12px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            transition: background-color var(--transition-speed) ease;
+        }
+
+        #lookupStatsBtn:hover {
+            background-color: var(--primary-hover);
+        }
     </style>
 </head>
 <body>
@@ -507,7 +621,7 @@
             </div>
             <div class="controls">
                 <button id="darkModeToggle">Toggle Dark Mode</button>
-                <button id="clearHistoryBtn">Clear History</button>
+                <button id="clearHistoryBtn" class="hidden">Clear History</button>
             </div>
         </header>
 
@@ -547,9 +661,17 @@
                     <div id="result"></div>
                     <button id="copyBtn">Copy to Clipboard</button>
                 </section>
-    
-                <section class="history-section">
-                    <h2>History</h2>
+
+                <section class="lookup-stats-section">
+                    <h2>Lookup Link Statistics</h2>
+                    <div class="input-group">
+                        <input type="text" id="lookupShortCodeInput" placeholder="Enter short code (e.g., abc123)" aria-label="Enter short code for statistics">
+                        <button id="lookupStatsBtn" class="btn">View Stats</button>
+                    </div>
+                </section>
+
+                <section class="history-section hidden">
+                    <h2>Link History</h2>
                     <ul id="historyList"></ul>
                 </section>
             </div>
@@ -561,6 +683,23 @@
     </div>
 
     <div id="toast" class="toast"></div>
+
+    <div id="statsModalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <button id="statsModalCloseBtn" class="modal-close-btn">&times;</button>
+            <h3 id="statsModalTitle">Link Statistics</h3>
+            <p><strong>Short Code:</strong> <span id="statsModalShortCode"></span></p>
+            <p><strong>Total Clicks:</strong> <span id="statsModalTotalClicks"></span></p>
+            <h4>Click Details:</h4>
+            <ul id="statsModalClickList">
+                <!-- Click items will be populated here by JS -->
+            </ul>
+            <div id="statsModalQrCodeContainer" style="margin-top: 20px; text-align: center; min-height: 50px;">
+                <!-- QR Code will be here (e.g., <img id="qrCodeImage" src="" alt="QR Code">) -->
+                <p style="font-size:0.8em; color: var(--text-secondary);">QR code will appear here.</p>  <!-- Placeholder text -->
+            </div>
+        </div>
+    </div>
 
     <script>
         const longUrlInput = document.getElementById('longUrl');
@@ -580,20 +719,133 @@
         const customOptionsPanel = document.getElementById('customOptionsPanel');
         const premiumBadge = document.getElementById('premiumBadge');
         const resultSection = document.querySelector('.result-section'); // Get the result section
+        const historySection = document.querySelector('.history-section'); // Get the history section
+        const headerClearHistoryBtn = document.getElementById('clearHistoryBtn'); // Header clear button
+
+        // Stats Modal Elements
+        const statsModalOverlay = document.getElementById('statsModalOverlay');
+        const statsModalCloseBtn = document.getElementById('statsModalCloseBtn');
+        const statsModalTitle = document.getElementById('statsModalTitle');
+        const statsModalShortCodeEl = document.getElementById('statsModalShortCode'); // Renamed for clarity
+        const statsModalTotalClicksEl = document.getElementById('statsModalTotalClicks'); // Renamed for clarity
+        const statsModalClickList = document.getElementById('statsModalClickList');
+        const statsModalQrCodeContainer = document.getElementById('statsModalQrCodeContainer');
+
+        // Lookup Stats Elements
+        const lookupShortCodeInput = document.getElementById('lookupShortCodeInput');
+        const lookupStatsBtn = document.getElementById('lookupStatsBtn');
 
         let userAuthCode = null; // Store validated auth code
 
         // --- Toast Notifications --- 
-        function showToast(message, type = 'success', duration = 3000) {
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show ' + type;
             setTimeout(() => {
                 toast.className = 'toast ' + type;
-            }, duration - 300); // Start fade out before removing
+            }, 3000 - 300); // Start fade out before removing
             setTimeout(() => {
                 toast.className = 'toast';
-            }, duration);
+            }, 3000);
         }
+
+        // --- Statistics Modal Logic ---
+        function openStatsModal() {
+            statsModalOverlay.style.display = 'flex';
+        }
+
+        function closeStatsModal() {
+            statsModalOverlay.style.display = 'none';
+        }
+
+        statsModalCloseBtn.addEventListener('click', closeStatsModal);
+        statsModalOverlay.addEventListener('click', (event) => {
+            if (event.target === statsModalOverlay) { // Clicked on overlay, not content
+                closeStatsModal();
+            }
+        });
+
+        function populateStatsModal(data) {
+            statsModalShortCodeEl.textContent = data.short_code || 'N/A';
+            statsModalTotalClicksEl.textContent = data.total_clicks !== undefined ? data.total_clicks : 'N/A';
+            statsModalClickList.innerHTML = ''; // Clear previous list
+
+            if (data.clicks && data.clicks.length > 0) {
+                data.clicks.forEach(click => {
+                    const listItem = document.createElement('li');
+                    const timestamp = new Date(click.timestamp).toLocaleString();
+                    listItem.innerHTML = `
+                        <div class="click-timestamp">${timestamp}</div>
+                        <div class="click-details">
+                            <span>User Agent: ${click.user_agent || 'N/A'}</span>
+                            <span>Referrer: ${click.referrer || 'N/A'}</span>
+                        </div>
+                    `;
+                    statsModalClickList.appendChild(listItem);
+                });
+            } else {
+                statsModalClickList.innerHTML = '<li>No click details available.</li>';
+            }
+            // Placeholder for QR code logic - for now, it just shows the container
+            statsModalQrCodeContainer.style.display = 'block'; // Or logic to show/hide if QR is generated
+        }
+
+        async function fetchAndShowStats(shortCode) {
+            if (!shortCode) {
+                showToast('Short code cannot be empty.', 'error');
+                return;
+            }
+            // Consider adding a loading state to the modal or a global loader
+            showToast(`Fetching stats for ${shortCode}...`, 'info');
+            try {
+                const response = await fetch(`/api/stats/${shortCode}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    populateStatsModal(data);
+                    openStatsModal();
+                } else {
+                    const errorData = await response.json();
+                    showToast(errorData.error || `Failed to fetch stats for ${shortCode}. Status: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                showToast('An error occurred while fetching statistics.', 'error');
+            }
+        }
+
+        // Helper to extract short code from various input forms
+        function getShortCodeFromInput(inputStr) {
+            if (!inputStr) return '';
+            try {
+                // If it's a full URL, extract pathname
+                const url = new URL(inputStr);
+                return url.pathname.replace(/^\/+/, ''); // Remove leading slashes
+            } catch (e) {
+                // Not a full URL, assume it's a code or path like /code
+                return inputStr.replace(/^\/+/, ''); // Remove leading slashes
+            }
+        }
+
+        // Event listener for the lookup stats button
+        lookupStatsBtn.addEventListener('click', () => {
+            const code = getShortCodeFromInput(lookupShortCodeInput.value.trim());
+            if (code) {
+                fetchAndShowStats(code);
+            } else {
+                showToast('Please enter a short code or URL.', 'error');
+            }
+        });
+        lookupShortCodeInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                const code = getShortCodeFromInput(lookupShortCodeInput.value.trim());
+                if (code) {
+                    fetchAndShowStats(code);
+                }
+            }
+        });
+
+        // --- End Statistics Modal Logic ---
 
         // --- Premium Features --- 
         function activatePremiumFeatures(authCodeToStore) {
@@ -726,7 +978,7 @@
         // --- History --- 
         function loadHistory() {
             const history = JSON.parse(localStorage.getItem('riidme_history')) || [];
-            history.forEach(item => addUrlToHistoryDOM(item.original, item.shortened));
+            history.forEach(item => addUrlToHistory(item.original, item.shortened));
         }
 
         function addUrlToHistory(original, shortened) {
@@ -763,6 +1015,7 @@
             } else {
                 historyList.appendChild(listItem);
             }
+            updateHistoryVisibility(); // Update visibility after adding
         }
 
         function clearHistory() {
@@ -770,6 +1023,7 @@
                 localStorage.removeItem('riidme_history');
                 historyList.innerHTML = '';
                 showToast('History cleared.', 'success');
+                updateHistoryVisibility(); // Update visibility after clearing
             }
         }
 
@@ -817,6 +1071,17 @@
 
             document.getElementById('currentYear').textContent = new Date().getFullYear();
         });
+
+        // Function to update visibility of history section and clear button
+        function updateHistoryVisibility() {
+            if (historyList.children.length > 0) {
+                historySection.classList.remove('hidden');
+                headerClearHistoryBtn.classList.remove('hidden');
+            } else {
+                historySection.classList.add('hidden');
+                headerClearHistoryBtn.classList.add('hidden');
+            }
+        }
     </script>
 </body>
 </html>
