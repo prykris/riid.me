@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/gorilla/mux"
 	"github.com/teris-io/shortid"
 	customlogger "riid.me/pkg/logger"
 	"riid.me/pkg/models"
@@ -173,8 +172,28 @@ func CreateShortURL(w http.ResponseWriter, r *http.Request) {
 // RedirectToLongURL handles requests to a shortcode, retrieves the original long URL,
 // records the click, and redirects the user.
 func RedirectToLongURL(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	code := vars["shortcode"]
+	// Skip processing for known paths
+	path := r.URL.Path
+	if path == "/" || strings.HasPrefix(path, "/api/") || 
+	   strings.HasPrefix(path, "/static/") || 
+	   path == "/favicon.ico" ||
+	   path == "/health" || 
+	   path == "/test-route" ||
+	   strings.HasSuffix(path, ".ico") ||
+	   strings.HasSuffix(path, ".png") ||
+	   strings.HasSuffix(path, ".jpg") ||
+	   strings.HasSuffix(path, ".css") ||
+	   strings.HasSuffix(path, ".js") {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Extract code from URL path (remove leading slash)
+	code := strings.TrimPrefix(path, "/")
+	if code == "" {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
 
 	ctx := r.Context()
 	longURL, err := storage.Rdb.Get(ctx, code).Result()
