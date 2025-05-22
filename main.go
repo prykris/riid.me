@@ -70,10 +70,12 @@ func main() {
 
 	// API routes using handlers from the handlers package
 	router.HandleFunc("/shorten", handlers.CreateShortURL).Methods("POST")
-	router.HandleFunc("/validate-auth", handlers.ValidateAuthCodeHandler).Methods("POST")
 	router.HandleFunc("/api/stats/{shortcode}", handlers.GetLinkStatsHandler).Methods("GET")
 	router.HandleFunc("/api/qr/{shortcode}", handlers.GenerateQRCodeHandler).Methods("GET")
 	router.HandleFunc("/health", healthCheck).Methods("GET")
+
+	// IMPORTANT: Place /validate-auth before the catch-all route
+	router.HandleFunc("/validate-auth", handlers.ValidateAuthCodeHandler).Methods("POST")
 
 	// Serve static files (e.g., index.html)
 	// The path "./static/" is relative to where the binary is run.
